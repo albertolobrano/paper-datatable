@@ -341,6 +341,14 @@ A [material design implementation of a data table](https://www.google.com/design
 				is: 'paper-datatable',
 
 				properties: {
+
+          wide: {
+            type: Boolean,
+            value: true,
+            notify: true
+          },
+
+
 					/**
 					 * Read only array of all the `paper-datatable-column`'s
 					 *
@@ -966,10 +974,9 @@ A [material design implementation of a data table](https://www.google.com/design
 
           var triggeredEvent = this.fire('row-tap-nav', {key: rowModel.rowKey, item: this._getByKey(rowModel.rowKey), originalEvent: ev}, {cancelable: true});
           if(!triggeredEvent.defaultPrevented && !dialogInitialized){
-            if(path[0].nodeName.toLowerCase() == 'td' || (ev.model.column && !ev.model.column.editable)){
               this._toggleSelectionView(rowModel.rowKey);
               ev.preventDefault();
-            }
+
           }else{
             ev.preventDefault();
           }
