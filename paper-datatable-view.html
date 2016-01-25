@@ -506,7 +506,7 @@
 				_setSelectedIds: function(ev){
 					if(ev.detail.selected){
 						if(!this._datatable.multiSelection){
-							this.splice('selectedIds', 0, 1);3
+							this.splice('selectedIds', 0, 1);
 						}
 						ev.detail.selected.forEach(function(key){
 							var id = this._datatable._getByKey(key)[this.idProperty];
