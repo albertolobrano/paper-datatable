@@ -10,9 +10,16 @@
 <link rel="import" href="../../../bower_components/paper-progress/paper-progress.html">
 <link rel="import" href="../../../bower_components/paper-styles/paper-styles.html">
 
+<link rel="import" href="../../../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+
+<link rel="import" href="../../../bower_components/iron-media-query/iron-media-query.html">
+
+
 
 <script src="weakCache.js"></script>
-<dom-module id="paper-datatable-card">
+<dom-module id="paper-datatable-view">
 	<template>
 		<style>
 			:host {
@@ -22,7 +29,7 @@
 			paper-material{
 				border-radius: 2px;
 				background: white;
-				@apply(--paper-datatable-card);
+				@apply(--paper-datatable-view);
 			}
 			#selectionToolbar{
 				display: none;
@@ -96,52 +103,79 @@
 				margin-right: 18px;
 			}
 		</style>
-		<paper-material elevation="1">
-			<div class="horizontal center layout" id="topBlock">
-				<div class="flex header">
-					<span>{{header}}</span>
-				</div>
-				<div id="toolbar-main" class="toolbar">
-					<content select="*[toolbar-main]"></content>
-				</div>
-				<div id="selectionToolbar" class="horizontal center layout fit" data-visible$="[[_selectedToolbarVisible]]">
-					<div class="flex selectionHeader">
-						<span>[[_numberselectedIds]]</span> item selected
-					</div>
-					<div class="toolbar" data-visible$="{{_singleSelectToolbarVisible}}">
-						<content select="*[toolbar-select-single]"></content>
-					</div>
-					<div class="toolbar" data-visible$="{{_multiSelectToolbarVisible}}">
-						<content select="*[toolbar-select-multi]"></content>
-					</div>
-					<div class="toolbar" data-visible>
-						<content select="*[toolbar-select]"></content>
-					</div>
-				</div>
-			</div>
-			<div>
-				<content select="paper-datatable"></content>
-			</div>
-			<div class="horizontal center layout" id="bottomBlock">
-				<div class="flex"></div>
-				<span>Rows per page:</span>
-				<paper-dropdown-menu no-label-float style="width: 68px;">
-					<paper-menu class="dropdown-content" selected="{{pageSize}}" attr-for-selected="value">
-						<template is="dom-repeat" items="{{pageSizeOptions}}">
-							<paper-item value="{{item}}">{{item}}</paper-item>
-						</template>
-					</paper-menu>
-				</paper-dropdown-menu>
+
+
+    <app-header-layout has-scrolling-region class="fit">
+      <app-header condenses reveals>
+        <app-toolbar>
+          <div class="flex">
+            <content select="*[toolbar-filter]"></content>
+          </div>
+
+          <paper-input value="{{searchTerm}}" on-input="retrieveResults" label="Search..." style="display:inline-block"
+                       no-label-float>
+            <div prefix>
+              <iron-icon icon="search"></iron-icon>
+            </div>
+          </paper-input>
+          <paper-icon-button icon="cached" on-tap="retrieveResults"></paper-icon-button>
+
+
+          <div>
+            <content select="*[toolbar-main]"></content>
+          </div>
+
+          <div id="selectionToolbar" class="horizontal center layout fit" data-visible$="[[_selectedToolbarVisible]]">
+            <div class="flex selectionHeader">
+              <span>[[_numberselectedIds]]</span> item selected
+            </div>
+            <div class="toolbar" data-visible$="{{_singleSelectToolbarVisible}}">
+              <content select="*[toolbar-select-single]"></content>
+            </div>
+            <div class="toolbar" data-visible$="{{_multiSelectToolbarVisible}}">
+              <content select="*[toolbar-select-multi]"></content>
+            </div>
+            <div class="toolbar" data-visible>
+              <content select="*[toolbar-select]"></content>
+            </div>
+          </div>
+        </app-toolbar>
+      </app-header>
+
+
+      <paper-material elevation="1">
+        <div>
+          <content select="paper-datatable"></content>
+        </div>
+        <div class="horizontal center layout" id="bottomBlock">
+          <div class="flex"></div>
+          <span>Rows per page:</span>
+          <paper-dropdown-menu no-label-float style="width: 68px;">
+            <paper-menu class="dropdown-content" selected="{{pageSize}}" attr-for-selected="value">
+              <template is="dom-repeat" items="{{pageSizeOptions}}">
+                <paper-item value="{{item}}">{{item}}</paper-item>
+              </template>
+            </paper-menu>
+          </paper-dropdown-menu>
 				<span>
 					<span>[[_getRangeStart(page, pageSize)]]</span>-<span>[[_getRangeEnd(page, pageSize, numberOfItems)]]</span> of&nbsp;<span>[[numberOfItems]]</span>
 				</span>
-				<paper-icon-button icon="datatable:first-page" on-tap="firstPage" disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
-				<paper-icon-button icon="datatable:prev-page" on-tap="prevPage" disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
-				<paper-icon-button icon="datatable:next-page" on-tap="nextPage" disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
-				<paper-icon-button icon="datatable:last-page" on-tap="lastPage" disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
-			</div>
-		</paper-material>
-	</template>
+          <paper-icon-button icon="datatable:first-page" on-tap="firstPage"
+                             disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
+          <paper-icon-button icon="datatable:prev-page" on-tap="prevPage"
+                             disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
+          <paper-icon-button icon="datatable:next-page" on-tap="nextPage"
+                             disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
+          <paper-icon-button icon="datatable:last-page" on-tap="lastPage"
+                             disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
+        </div>
+      </paper-material>
+
+    </app-header-layout>
+
+    <iron-media-query query="(min-width: 600px)" query-matches="{{wide}}"></iron-media-query>
+
+  </template>
 
 	<script>
 		(function () {
@@ -151,30 +185,21 @@
 			 A [material design implementation of the tables within cards spec](https://www.google.com/design/spec/components/data-tables.html#data-tables-tables-within-cards).
 
 
-			 @element paper-datatable-card
+			 @element paper-datatable-view
 			 @demo demo/users-card.html Polished demo
-			 @demo demo/paper-datatable-card.html Complex demo
+			 @demo demo/paper-datatable-view.html Complex demo
 			 */
 
 			Polymer({
 
-				is: 'paper-datatable-card',
+				is: 'paper-datatable-view',
 				properties: {
-					/**
-					 * Heading shown above the data table
-					 *
-					 * @attribute String
-					 * @default ''
-					 * @type Object
-					 */
-					header: String,
-					/**
-					 * See general documentation.
-					 *
-					 * @attribute dataSource
-					 * @type Object
-					 */
-					dataSource: Object,
+          wide: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+
 					/**
 					 * Number of items per page
 					 *
@@ -211,10 +236,7 @@
 						value: 1,
 						notify: true
 					},
-					_disableSave: {
-						type: Boolean,
-						value: false
-					},
+
 					_datatable: {
 						type: Object
 					},
@@ -308,7 +330,7 @@
 								var id = data[this.idProperty];
 								// setting properties in the `set` functions causes trouble, so it's more sensible for that
 								// to simply have no effect rather than make the entire element break, especially
-								// as the 'no effect' version can be useful (see paper-datatable-card.html demo)
+								// as the 'no effect' version can be useful (see paper-datatable-view.html demo)
 								var dataClone = JSON.parse(JSON.stringify(data));
 
 								if (path.length > 0) {
@@ -480,7 +502,7 @@
 				_setSelectedIds: function(ev){
 					if(ev.detail.selected){
 						if(!this._datatable.multiSelection){
-							this.splice('selectedIds', 0, 1);
+							this.splice('selectedIds', 0, 1);3
 						}
 						ev.detail.selected.forEach(function(key){
 							var id = this._datatable._getByKey(key)[this.idProperty];

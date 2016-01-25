@@ -34,5 +34,5 @@ var WeakCache = function(limit){
 			values.splice(index, 1);
 			keys.splice(index, 1);
 		}
-	}
-}
+	};
+};

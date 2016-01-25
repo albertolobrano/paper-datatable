@@ -1,11 +1,11 @@
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
 
 <link rel="import" href="paper-datatable-column.html">
 <link rel="import" href="paper-datatable-edit-dialog.html">
 <link rel="import" href="datatable-icons.html">
 
-<link rel="import" href="../paper-checkbox/paper-checkbox.html">
-<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
 
 <script src="weakCache.js"></script>
 
@@ -157,6 +157,9 @@
 			tr[data-selected] td{
 				background: var(--paper-datatable-row-selection-color, --paper-grey-100);
 			}
+      tr[data-selected-view] td{
+        background: var(--paper-datatable-row-selection-color, --paper-grey-100);
+      }
 			tr:hover td{
 				background: var(--paper-datatable-row-hover-color, --paper-grey-200);
 			}
@@ -275,7 +278,7 @@
 						 duplication due to https://github.com/David-Mulder/paper-datatable/issues/3 ...
 						-->
 						<template is="dom-if" if="{{multiSelection}}">
-							<tr data-key$="{{rowKey}}" data-selected$="[[_isRowSelected(rowKey, selectedKeys.splices)]]" style$="{{_customRowStyle(rowKey)}}">
+							<tr data-key$="{{rowKey}}" data-selected$="[[_isRowSelected(rowKey, selectedKeys.splices)]]" data-selected-view$="[[_isRowSelectedView(rowKey, selectedKeyView)]]" style$="{{_customRowStyle(rowKey)}}">
 								<template is="dom-if" if="{{selectable}}">
 									<td on-tap="_cellTapped">
 										<!-- a somewhat specific 'hack' for <paper-datatable-card> :/ -->
@@ -285,7 +288,7 @@
 									</td>
 								</template>
 								<template id="cellRepeat" is="dom-repeat" items="{{_columns}}" as="column" on-dom-change="_restructureData">
-									<td data-empty class="bound-cell" data-column="{{column}}" data-editable$="{{column.editable}}" data-edit-icon$="{{column.editIcon}}" on-tap="_cellTapped">
+									<td data-empty class="bound-cell" data-column="{{column}}" data-editable$="{{column.editable}}" data-edit-icon$="{{column.editIcon}}" on-tap="_cellTappedRow">
 										<div>
 											<span></span>
 											<iron-icon icon="datatable:editable" class="editable"></iron-icon>
@@ -295,14 +298,14 @@
 							</tr>
 						</template>
 						<template is="dom-if" if="{{!multiSelection}}">
-							<tr data-key$="{{rowKey}}" data-selected$="[[_isRowSelected(rowKey, selectedKey)]]" style$="{{_customRowStyle(rowKey)}}">
+							<tr data-key$="{{rowKey}}" data-selected$="[[_isRowSelected(rowKey, selectedKey)]]" data-selected-view$="[[_isRowSelectedView(rowKey, selectedKeyView)]]" style$="{{_customRowStyle(rowKey)}}">
 								<template is="dom-if" if="{{selectable}}">
 									<td on-tap="_cellTapped">
 										<paper-checkbox checked="[[_isRowSelected(rowKey, selectedKey)]]" on-change="_setSelection"></paper-checkbox>
 									</td>
 								</template>
 								<template id="cellRepeat" is="dom-repeat" items="{{_columns}}" as="column" on-dom-change="_restructureData">
-									<td data-empty class="bound-cell" data-column="{{column}}" data-editable$="{{column.editable}}" data-edit-icon$="{{column.editIcon}}" on-tap="_cellTapped">
+									<td data-empty class="bound-cell" data-column="{{column}}" data-editable$="{{column.editable}}" data-edit-icon$="{{column.editIcon}}" on-tap="_cellTappedRow">
 										<div>
 											<span></span>
 											<iron-icon icon="datatable:editable" class="editable"></iron-icon>
@@ -401,6 +404,11 @@ A [material design implementation of a data table](https://www.google.com/design
 						type: Object,
 						notify: true
 					},
+
+          selectedKeyView: {
+            type: Object,
+            notify: true
+          },
 					/**
 					 * If `multi-selection` is off then this contains the selected row.
 					 *
@@ -784,6 +792,10 @@ A [material design implementation of a data table](https://www.google.com/design
 					}
 				},
 
+        _isRowSelectedView: function(key){
+          return this.selectedKeyView == key;
+        },
+
 				_setSelection: function(ev){
 					var key = ev.model.rowKey;
 					if(ev.target.checked){
@@ -808,6 +820,21 @@ A [material design implementation of a data table](https://www.google.com/design
 						}
 					}
 				},
+
+        _toggleSelectionView: function(key){
+              var checked = this.selectedKeyView == key;
+              if(checked){
+                this.selectedKeyView = null;
+                this.fire('selection-changed-view', {deselected: [key]});
+              }else{
+                if(this.selectedKeyView){
+                  this.fire('selection-changed-view', {selected: [key], deselected: [this.selectedKeyView]});
+                }else{
+                  this.fire('selection-changed-view', {selected: [key]});
+                }
+                this.selectedKeyView = key;
+              }
+        },
 
 				_toggleSelection: function(key){
 					if(this.selectable){
@@ -910,6 +937,45 @@ A [material design implementation of a data table](https://www.google.com/design
 					}
 
 				},
+
+        _cellTappedRow: function(ev){
+          var PolymerEvent = Polymer.dom(ev);
+          var path = PolymerEvent.path;
+          var cell;
+          for(var i=0;i<path.length;i++){
+            if(path[i].nodeName.toLowerCase() == 'td'){
+              cell = path[i];
+            }
+            if(path[i].nodeName.toLowerCase() == 'tr'){
+              break;
+            }
+          }
+          var rowModel = this.$.rowRepeat.modelForElement(path[i]);
+
+          // clicks in the checkbox cell do not have a set column
+          if(ev.model.column){
+            var item = this._getByKey(rowModel.rowKey);
+            ev.model.column.fire('cell-tap', {key:rowModel.rowKey, item:item, target:PolymerEvent.path[0], originalEvent: ev}, {bubbles: false});
+            this.fire('cell-tap', {column: ev.model.column, key:rowModel.rowKey, item:item, target:PolymerEvent.path[0], originalEvent: ev}, {});
+
+            if(ev.model.column.dialog){
+              this._initializeInDialog(cell, ev.model.column, item, rowModel.rowKey);
+              var dialogInitialized = true;
+            }
+          }
+
+          var triggeredEvent = this.fire('row-tap-nav', {key: rowModel.rowKey, item: this._getByKey(rowModel.rowKey), originalEvent: ev}, {cancelable: true});
+          if(!triggeredEvent.defaultPrevented && !dialogInitialized){
+            if(path[0].nodeName.toLowerCase() == 'td' || (ev.model.column && !ev.model.column.editable)){
+              this._toggleSelectionView(rowModel.rowKey);
+              ev.preventDefault();
+            }
+          }else{
+            ev.preventDefault();
+          }
+
+
+        },
 
 				_cellTapped: function(ev){
 
