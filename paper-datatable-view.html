@@ -204,7 +204,19 @@
             notify: true
           },
 
-					/**
+          itemActive: {
+            type: Boolean,
+            value: false
+          },
+
+          displayList: {
+            type: Boolean,
+            notify: true,
+            computed: '_displayList(wide,itemActive)'
+          },
+
+
+          /**
 					 * Number of items per page
 					 *
 					 * @attribute pageSize
@@ -309,6 +321,12 @@
 					'_setNumberOfItems(dataSource.length)',
 					'_createCache(dataSource.queryForIds)'
 				],
+
+
+        _displayList: function(wide, itemActive){
+            return itemActive || !wide;
+        },
+
 				_createCache: function(){
 					this._cacheUsed = true;
 					this._cache = new WeakCache(100);
